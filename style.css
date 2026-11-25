@@ -73,3 +73,12 @@ input.bad{border:2px solid var(--red);background:#fff1f2}
 .modal{background:#fff;border-radius:16px;padding:18px;max-width:420px;width:100%;border-top:8px solid var(--red)}
 .modal h2{color:var(--red)}
 .grp{font-weight:700;font-size:14px;color:#334155;margin:12px 0 4px;padding-bottom:4px;border-bottom:2px solid var(--line)}
+a.stat{text-decoration:none;color:inherit;display:block}
+.stat.sel{outline:3px solid var(--blue)}
+.sheet{position:fixed;left:8px;right:8px;bottom:calc(70px + env(safe-area-inset-bottom));z-index:25;background:#fff;border-radius:14px;padding:12px;border:3px solid var(--red);box-shadow:0 8px 30px rgba(0,0,0,.25);max-width:704px;margin:0 auto}
+.roombox{font-size:40px;font-weight:800;text-align:center;border-radius:12px;padding:6px;margin:8px 0;font-variant-numeric:tabular-nums;background:#dbeafe;color:#1e3a8a}
+.room-ok{background:#dbeafe;color:#1e3a8a}
+.flash-amber{background:#facc15!important;color:#422006!important;animation:flash 1s infinite}
+.flash-red{background:#dc2626!important;color:#fff!important;animation:flash .6s infinite}
+@keyframes flash{0%,100%{opacity:1}50%{opacity:.35}}
+.pill.room{background:#dbeafe;color:#1e3a8a}

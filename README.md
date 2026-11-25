@@ -24,25 +24,29 @@
 
 > 僅供現場管制參考，不取代救護人員與醫師之專業判斷。
 
-## 架構（v2）
+## 架構（v3）
 - 前端：GitHub Pages 靜態網頁（手機優先，可加到主畫面，離線可開）。
-- 即時同步：Firebase 專案 `taichung-fire-rehab`（免費 Spark 方案，Firestore 台灣 asia-east1）。
-  - 匿名登入＋**隊碼**：隊碼存在 `teams/taichung/private/config`，前端永遠讀不到；只有輸入正確隊碼的手機能讀寫（`firebase/firestore.rules`）。
-  - 離線：Firestore 離線快取，斷線時照常操作，恢復連線自動上傳。
-- Google 試算表：名冊的唯一來源；`gas/Code.gs` 每 5 分鐘把名冊推到雲端，並把氣瓶紀錄／生命徵象鏡像回試算表（近 14 天）。
+- 即時同步：Firebase 專案 `taichung-fire-rehab`（免費 Spark 方案，Firestore 台灣 asia-east1），規則見 `firebase/firestore.rules.template`。
+- **登入＝名冊身分**：輸入名冊內的「臂章號碼」或「義消證號」即可使用，沒有隊碼。
+  - 雲端只存號碼的 SHA-256 雜湊（`rosterKeys`，任何人都讀不到）；手機登入時由 Firestore 規則比對雜湊是否存在才給權限。
+  - 從名冊刪除某人 → 他的手機立即失去讀寫權限。
+  - 防猜測：每支手機連續嘗試 5 次後鎖定 15 分鐘（規則強制）。
+  - 每筆氣瓶／REHAB／生命徵象都記錄「填寫人（職稱＋姓名）」，規則禁止冒用他人身分。
+- **系統開發者**：用開發者密碼登入（規則內只存密碼雜湊的雜湊）。只有開發者能改「設定」（REHAB 閾值、入室警示分鐘、網址）與刪除紀錄；名冊所有登入隊員都可編輯。
+- Google 試算表：名冊來源；`gas/Code.gs` 每 5 分鐘把名冊（含義消證號）推到雲端，並把氣瓶紀錄／生命徵象（含入室、填寫人）鏡像回試算表（近 14 天）。
 
-## 第一次啟用（隊長做一次）
-1. 決定全隊隊碼（至少 6 字，不要公開張貼）。
+## 第一次啟用
+1. 名冊工作表欄位：臂章號碼、分隊別、職稱、姓名、義消證號（義消證號可空白）。
 2. 試算表 → 擴充功能 → Apps Script → 貼上 `gas/Code.gs` → 儲存。
-3. 專案設定 → 指令碼屬性 → 新增 `TEAM_CODE` = 隊碼。
-4. 函式選 `setup` → 執行 → 授權（「Google 尚未驗證」→ 進階 → 前往）。完成後會設定雲端隊碼、同步名冊、每 5 分鐘自動同步。
-5. 手機開 App → 設定 → 輸入隊碼 → 加入隊伍；再用「分享加入連結」傳給隊員。
+3. 專案設定 → 指令碼屬性 → 新增 `DEV_PASSWORD` = 系統開發者密碼。
+4. 函式選 `setup` → 執行 → 授權（「Google 尚未驗證」→ 進階 → 前往）。完成後名冊同步到雲端、每 5 分鐘自動同步。
+5. 隊員手機開 App → 輸入自己的臂章號碼／義消證號 → 登入。
 
-（也可以先在 App 設定頁「第一次使用：設定全隊隊碼」，再把同一組隊碼填進 Apps Script。隊碼設定後無法從手機修改。）
+（不用 Apps Script 也可以：開發者在 App 設定頁登入後，用「匯入 CSV」或逐筆新增名冊。）
 
 ## 檔案
 - `index.html` `app.js` `style.css` `config.js`：前端
 - `gas/Code.gs`：試算表 ↔ 雲端同步（Apps Script）
-- `firebase/`：Firestore 安全規則與設定
+- `firebase/`：Firestore 規則範本（開發者密碼雜湊部署時才填入，不放在公開 repo）
 - `sample-roster.csv`：名冊 CSV 範本（假資料）
 - `vendor/`：qrcode-generator（MIT）、html5-qrcode（Apache-2.0）、Firebase JS SDK 11（Apache-2.0，打包成單檔）
