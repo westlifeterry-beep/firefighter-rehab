@@ -16,15 +16,15 @@
 </header>
 <main id="app"></main>
 <nav class="tabs no-print">
-  <a href="#/" data-tab="home">🏠<span>現場</span></a>
-  <a href="#/scan" data-tab="scan">📷<span>掃描</span></a>
-  <a href="#/roster" data-tab="roster">👥<span>名冊</span></a>
-  <a href="#/records" data-tab="records">📋<span>紀錄</span></a>
-  <a href="#/settings" data-tab="settings">⚙️<span>設定</span></a>
+  <a href="#/" data-tab="home"><span class="ic">🧑‍🚒</span><span>人員管控</span></a>
+  <a href="#/status" data-tab="status"><span class="ic"><svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true"><rect x="8" y="6" width="8" height="16" rx="4" fill="currentColor"/><rect x="10" y="2.5" width="4" height="3.5" rx="1" fill="currentColor"/><path d="M14 4h4v3" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linecap="round"/><rect x="9.5" y="11" width="5" height="2" rx="1" fill="#fff"/></svg></span><span>管制狀態</span></a>
+  <a href="#/settings" data-tab="settings"><span class="ic">⚙️</span><span>設定</span></a>
 </nav>
+<div id="alertLayer"></div>
 <div id="toast" class="toast"></div>
 <script src="config.js"></script>
 <script src="vendor/qrcode.js"></script>
+<script src="vendor/firebase.bundle.js"></script>
 <script src="app.js"></script>
 </body>
 </html>

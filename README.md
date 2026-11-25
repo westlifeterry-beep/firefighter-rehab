@@ -17,24 +17,32 @@
 | 體溫 | 持續上升超過 20 分鐘 | EMSer 簡報 p.4 |
 | 體溫 | ≥ 38.0°C | 系統預設（NFPA 1584 常用值，EMSer 未給數值） |
 | 血氧 SpO2 | < 94% | 系統預設（到院前常用下限，EMSer 未給數值） |
-| 最少休息 | 10 分鐘 | EMSer（10–20 分鐘強制休息） |
+| REHAB 倒數 | 10 分鐘後通知量測 | Terry 指定（EMSer：至少 10–20 分鐘休息） |
+| 工作時間預設 | 30 分鐘；進入時間 = 離場 − 工作時間 | Terry 指定 |
 
 低溫處置（降溫）建議：卸裝＋初級除污、前臂與雙手浸泡 10–17°C 冷水、濕毛巾／水冷扇／冰敷、補水電解質、每 5–10 分鐘複測、未恢復不得歸隊，異常立即後送。
 
 > 僅供現場管制參考，不取代救護人員與醫師之專業判斷。
 
-## 接上 Google 試算表（一次性，約 3 分鐘）
-1. 打開資料表 → 擴充功能 → Apps Script。
-2. 刪掉預設內容，貼上 `gas/Code.gs` 全部內容 → 儲存。
-3. 部署 → 新增部署作業 → 齒輪選「網頁應用程式」→ 執行身分：**我**；誰可以存取：**所有人** → 部署 → 授權（會出現「Google 尚未驗證」，按「進階 → 前往（不安全）」，這是你自己的指令碼）。
-4. 複製 `/exec` 結尾的網址。
-5. （建議）專案設定 → 指令碼屬性 → 新增 `ACCESS_KEY` = 自訂隊碼。
-6. 把網址交給助理寫進 `config.js`（所有手機自動生效），或在 App「設定」頁自己貼上（只影響該手機）；有設隊碼的話每支手機在設定頁填一次。
+## 架構（v2）
+- 前端：GitHub Pages 靜態網頁（手機優先，可加到主畫面，離線可開）。
+- 即時同步：Firebase 專案 `taichung-fire-rehab`（免費 Spark 方案，Firestore 台灣 asia-east1）。
+  - 匿名登入＋**隊碼**：隊碼存在 `teams/taichung/private/config`，前端永遠讀不到；只有輸入正確隊碼的手機能讀寫（`firebase/firestore.rules`）。
+  - 離線：Firestore 離線快取，斷線時照常操作，恢復連線自動上傳。
+- Google 試算表：名冊的唯一來源；`gas/Code.gs` 每 5 分鐘把名冊推到雲端，並把氣瓶紀錄／生命徵象鏡像回試算表（近 14 天）。
 
-沒接之前是「本機模式」：資料存在手機瀏覽器，可在「紀錄」頁匯出 CSV。
+## 第一次啟用（隊長做一次）
+1. 決定全隊隊碼（至少 6 字，不要公開張貼）。
+2. 試算表 → 擴充功能 → Apps Script → 貼上 `gas/Code.gs` → 儲存。
+3. 專案設定 → 指令碼屬性 → 新增 `TEAM_CODE` = 隊碼。
+4. 函式選 `setup` → 執行 → 授權（「Google 尚未驗證」→ 進階 → 前往）。完成後會設定雲端隊碼、同步名冊、每 5 分鐘自動同步。
+5. 手機開 App → 設定 → 輸入隊碼 → 加入隊伍；再用「分享加入連結」傳給隊員。
+
+（也可以先在 App 設定頁「第一次使用：設定全隊隊碼」，再把同一組隊碼填進 Apps Script。隊碼設定後無法從手機修改。）
 
 ## 檔案
 - `index.html` `app.js` `style.css` `config.js`：前端
-- `gas/Code.gs`：Apps Script 後端（讀名冊、寫入氣瓶紀錄／生命徵象，依紀錄ID覆寫）
+- `gas/Code.gs`：試算表 ↔ 雲端同步（Apps Script）
+- `firebase/`：Firestore 安全規則與設定
 - `sample-roster.csv`：名冊 CSV 範本（假資料）
-- `vendor/`：qrcode-generator（MIT）、html5-qrcode（Apache-2.0）
+- `vendor/`：qrcode-generator（MIT）、html5-qrcode（Apache-2.0）、Firebase JS SDK 11（Apache-2.0，打包成單檔）
