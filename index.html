@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="zh-Hant-TW">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#b91c1c">
+<title>REHAB 氣瓶管制</title>
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon.svg">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header class="top no-print">
+  <a href="#/" class="brand">🧯 REHAB 氣瓶管制</a>
+  <span id="syncBadge" class="badge">本機模式</span>
+</header>
+<main id="app"></main>
+<nav class="tabs no-print">
+  <a href="#/" data-tab="home">🏠<span>現場</span></a>
+  <a href="#/scan" data-tab="scan">📷<span>掃描</span></a>
+  <a href="#/roster" data-tab="roster">👥<span>名冊</span></a>
+  <a href="#/records" data-tab="records">📋<span>紀錄</span></a>
+  <a href="#/settings" data-tab="settings">⚙️<span>設定</span></a>
+</nav>
+<div id="toast" class="toast"></div>
+<script src="config.js"></script>
+<script src="vendor/qrcode.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
