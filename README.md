@@ -2,8 +2,8 @@
 
 手機優先的網頁系統：掃描臂章 QR Code 建檔 → 填氣瓶使用情形 → 達條件自動進入 REHAB → 生命徵象監測，超標顯示紅色警戒「建議進入低溫處置流程」。
 
-- 網址：https://westlifeterry-beep.github.io/firefighter-rehab/
-- 個人 QR：`https://westlifeterry-beep.github.io/firefighter-rehab/?id=臂章號碼`
+- 網址：https://fire-rehab.web.app/（舊 GitHub Pages 網址會自動轉址）
+- 個人 QR：`https://fire-rehab.web.app/?id=臂章號碼`
 - 資料表：「REHAB 氣瓶管制系統 資料表」（名冊／氣瓶紀錄／生命徵象）
 
 ## REHAB 判定（設定頁可改）
@@ -45,7 +45,7 @@
 （不用 Apps Script 也可以：開發者在 App 設定頁登入後，用「匯入 CSV」或逐筆新增名冊。）
 
 ## 檔案
-- `index.html` `app.js` `style.css` `config.js`：前端
+- `public/`：前端（Firebase Hosting）；根目錄 `index.html`／`404.html`／`sw.js` 只負責把舊 GitHub Pages 網址轉到新網址
 - `gas/Code.gs`：試算表 ↔ 雲端同步（Apps Script）
 - `firebase/`：Firestore 規則範本（開發者密碼雜湊部署時才填入，不放在公開 repo）
 - `sample-roster.csv`：名冊 CSV 範本（假資料）

@@ -48,7 +48,7 @@ const DEFAULT_TH = {
 };
 function th() { const c = load(LS.cloudTh, {}) || {}; const o = {}; for (const k in DEFAULT_TH) o[k] = (c[k] != null && c[k] !== '' && !isNaN(Number(c[k]))) ? Number(c[k]) : DEFAULT_TH[k].v; return o; }
 function settings() { return Object.assign({ baseUrl: '' }, load(LS.settings, {})); }
-function baseUrl() { const b = (settings().baseUrl || '').trim(); return b || (location.origin + location.pathname); }
+function baseUrl() { let b = (settings().baseUrl || '').trim(); if (/github\.io/.test(b)) b = ''; return b || CFG.BASE_URL || (location.origin + location.pathname); }
 
 /* ---------- 資料層 ---------- */
 const S = { roster: load(LS.roster, []), records: {}, vitals: {}, me: load(LS.me, null), dev: !!load(LS.dev, false), ready: false, pending: false, viewDate: todayStr(), subs: [], uid: null };
@@ -556,7 +556,7 @@ function viewSettings() {
   <div class="card"><h2>REHAB 判定標準 ${dev ? '' : '<span class="pill gray">唯讀</span>'}</h2><p class="muted small">${dev ? '你是系統開發者，修改後全隊同步。' : '只有系統開發者可以修改（雲端規則強制）。'}<span class="src">EMSer</span> 來自 EMSer 後勤照護簡報與你指定的條件；<span class="src nfpa">預設</span> EMSer 沒給數值，採 NFPA 1584／到院前常用值。</p>
     ${Object.keys(DEFAULT_TH).map(k => `<label>${esc(DEFAULT_TH[k].label)} <span class="src ${DEFAULT_TH[k].src === 'NFPA' ? 'nfpa' : ''}">${DEFAULT_TH[k].src === 'NFPA' ? '預設' : 'EMSer'}</span></label><input inputmode="decimal" data-th="${k}" value="${T[k]}" ${dev ? '' : 'disabled'}><div class="muted small">${esc(DEFAULT_TH[k].note)}</div>`).join('')}
     ${dev ? `<div class="grid2" style="margin-top:8px"><button class="btn-red" id="thSave">儲存標準（全隊）</button><button id="thReset">恢復預設</button></div>` : ''}</div>
-  ${dev ? `<div class="card"><h2>系統（開發者）</h2><p class="muted small">專案：${esc(CFG.FIREBASE && CFG.FIREBASE.projectId)}｜隊伍：${esc(TEAM)}</p><label>QR Code 網址（留空 = 本頁網址）</label><input id="sBase" value="${esc(s.baseUrl)}" placeholder="${esc(location.origin + location.pathname)}"><button class="btn btn-block" id="sSave">儲存</button></div>` : ''}${DISC}`;
+  ${dev ? `<div class="card"><h2>系統（開發者）</h2><p class="muted small">專案：${esc(CFG.FIREBASE && CFG.FIREBASE.projectId)}｜隊伍：${esc(TEAM)}</p><label>QR Code 網址（留空 = ${esc(CFG.BASE_URL || '本頁網址')}）</label><input id="sBase" value="${esc(s.baseUrl)}" placeholder="${esc(location.origin + location.pathname)}"><button class="btn btn-block" id="sSave">儲存</button></div>` : ''}${DISC}`;
   $('#logout').onclick = () => { if (confirm('登出後需重新輸入臂章號碼／義消證號，確定？')) logout(); };
   const db_ = $('#devBtn'); if (db_) db_.onclick = async () => { try { await devLogin($('#devPw').value); $('#devPw').value = ''; toast('已以系統開發者登入'); route(true); } catch (e) { toast(e.message || String(e)); } };
   const getForm = () => ({ id: $('#mId').value.trim(), vid: $('#mVid').value.trim(), unit: $('#mU').value.trim(), title: $('#mT').value.trim(), name: $('#mN').value.trim() });

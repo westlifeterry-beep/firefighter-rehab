@@ -9,5 +9,6 @@ window.REHAB_CONFIG = {
     appId: "1:959322571192:web:827f792a5e453d7c52cf4d",
     messagingSenderId: "959322571192"
   },
+  BASE_URL: "https://fire-rehab.web.app/",
   SHEET_URL: "https://docs.google.com/spreadsheets/d/1V9u00DRSQQL7tXClHwrqYgLx8hwm1dPBJNd9PwXzS88/edit"
 };
