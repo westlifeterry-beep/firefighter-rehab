@@ -1,7 +1,7 @@
 rules_version = '2';
 // REHAB 氣瓶管制系統 v3
 // 登入：輸入名冊內的「臂章號碼」或「義消證號」。名冊鍵以雜湊存在 rosterKeys（任何人不可讀），
-// 每次嘗試先在 guard/{uid} 記一次（5 次後鎖 15 分鐘），再以同一雜湊建立 members/{uid}。
+// 以雜湊建立 members/{uid}（不設嘗試次數限制）。
 // 系統開發者：密碼雜湊只存在本規則（不公開），設定只有開發者能改。
 service cloud.firestore {
   match /databases/{database}/documents {
@@ -13,23 +13,14 @@ service cloud.firestore {
       && exists(/databases/$(database)/documents/teams/$(t)/rosterKeys/$(memberDoc(t).data.key)); }
     function isDev(t) { return authed() && exists(/databases/$(database)/documents/teams/$(t)/devs/$(request.auth.uid)); }
     function canUse(t) { return isDev(t) || isMember(t); }
-    function guard(t) { return get(/databases/$(database)/documents/teams/$(t)/guard/$(request.auth.uid)).data; }
-    function freshGuard(t, k) { return guard(t).k == k && guard(t).t > request.time - duration.value(2, 'm'); }
     function small() { return request.resource.data.keys().size() <= 40; }
     function byOk(t, by) { return isDev(t) || (by is map && by.key == memberDoc(t).data.key); }
 
     match /teams/{t} {
-      // 每台裝置的嘗試次數：5 次後需等 15 分鐘
+      // 舊版鎖定資料：已停用，只允許開發者清除
       match /guard/{uid} {
-        allow get: if authed() && request.auth.uid == uid;
-        allow create: if authed() && request.auth.uid == uid && teamOk(t)
-          && request.resource.data.keys().hasOnly(['n', 't', 'k'])
-          && request.resource.data.n == 1 && request.resource.data.t == request.time && request.resource.data.k is string;
-        allow update: if authed() && request.auth.uid == uid
-          && request.resource.data.keys().hasOnly(['n', 't', 'k'])
-          && request.resource.data.t == request.time && request.resource.data.k is string
-          && ((resource.data.n < 5 && request.resource.data.n == resource.data.n + 1)
-              || (request.time > resource.data.t + duration.value(15, 'm') && request.resource.data.n == 1));
+        allow get, delete: if authed() && request.auth.uid == uid;
+        allow list, delete: if isDev(t);
       }
       match /rosterKeys/{h} {
         allow read: if false;
@@ -39,23 +30,19 @@ service cloud.firestore {
       }
       match /members/{uid} {
         allow get: if authed() && request.auth.uid == uid;
-        allow create: if authed() && request.auth.uid == uid && teamOk(t)
+        allow create, update: if authed() && request.auth.uid == uid && teamOk(t)
           && request.resource.data.keys().hasOnly(['key', 'at'])
           && request.resource.data.at == request.time
-          && freshGuard(t, request.resource.data.key)
           && exists(/databases/$(database)/documents/teams/$(t)/rosterKeys/$(request.resource.data.key));
         allow delete: if authed() && request.auth.uid == uid;
-        allow update: if false;
       }
       match /devs/{uid} {
         allow get: if authed() && request.auth.uid == uid;
-        allow create: if authed() && request.auth.uid == uid && teamOk(t)
+        allow create, update: if authed() && request.auth.uid == uid && teamOk(t)
           && request.resource.data.keys().hasOnly(['proof', 'at'])
           && request.resource.data.at == request.time
-          && freshGuard(t, request.resource.data.proof)
           && hashing.sha256(request.resource.data.proof).toHexString().lower() == '__DEV_H2__';
         allow delete: if authed() && request.auth.uid == uid;
-        allow update: if false;
       }
       match /config/{doc} {
         allow read: if canUse(t);

@@ -37,7 +37,7 @@ function syncAll() { var t = token_(); devLogin_(t); syncRoster_(t); mirror_(t);
 function prop_(k) { return PropertiesService.getScriptProperties().getProperty(k); }
 function setProp_(k, v) { PropertiesService.getScriptProperties().setProperty(k, v); }
 function hex_(s) { return Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256, s, Utilities.Charset.UTF_8).map(function (b) { return ('0' + (b & 255).toString(16)).slice(-2); }).join(''); }
-function normId_(s) { return String(s || '').replace(/\s+/g, '').toUpperCase(); }
+function normId_(s) { return String(s || '').normalize('NFKC').replace(/[\s\u200B-\u200D\uFEFF]+/g, '').toUpperCase(); }
 function idKey_(id) { return hex_('rehab-id-v1:' + TEAM + ':' + normId_(id)); }
 function token_() {
   var rt = prop_('FB_REFRESH'), j;
@@ -54,12 +54,9 @@ function commit_(t, writes) { return api_(t, 'post', 'https://firestore.googleap
 function devLogin_(t) {
   if (prop_('FB_DEV') === t.uid) return;
   var proof = hex_('rehab-dev-v1:' + prop_('DEV_PASSWORD'));
-  var g = UrlFetchApp.fetch(BASE + '/teams/' + TEAM + '/guard/' + t.uid, { muteHttpExceptions: true, headers: { Authorization: 'Bearer ' + t.idToken } });
-  var n = 1; if (g.getResponseCode() === 200) { var gd = JSON.parse(g.getContentText()).fields || {}; var old = Number((gd.n || {}).integerValue || 0); n = old < 5 ? old + 1 : 1; }
-  commit_(t, [{ update: { name: docName_('guard/' + t.uid), fields: { n: { integerValue: String(n) }, k: { stringValue: proof } } }, updateTransforms: [{ fieldPath: 't', setToServerValue: 'REQUEST_TIME' }] }]);
   var r = UrlFetchApp.fetch('https://firestore.googleapis.com/v1/projects/' + PROJECT + '/databases/(default)/documents:commit', { method: 'post', contentType: 'application/json', muteHttpExceptions: true, headers: { Authorization: 'Bearer ' + t.idToken },
-    payload: JSON.stringify({ writes: [{ update: { name: docName_('devs/' + t.uid), fields: { proof: { stringValue: proof } } }, updateTransforms: [{ fieldPath: 'at', setToServerValue: 'REQUEST_TIME' }], currentDocument: { exists: false } }] }) });
-  if (r.getResponseCode() !== 200 && r.getContentText().indexOf('ALREADY_EXISTS') < 0) throw new Error('開發者登入失敗（密碼錯誤或嘗試太多次）：' + r.getContentText().slice(0, 200));
+    payload: JSON.stringify({ writes: [{ update: { name: docName_('devs/' + t.uid), fields: { proof: { stringValue: proof } } }, updateTransforms: [{ fieldPath: 'at', setToServerValue: 'REQUEST_TIME' }] }] }) });
+  if (r.getResponseCode() !== 200) throw new Error('開發者登入失敗（DEV_PASSWORD 錯誤）：' + r.getContentText().slice(0, 200));
   setProp_('FB_DEV', t.uid);
 }
 function api_(t, method, path, body) {

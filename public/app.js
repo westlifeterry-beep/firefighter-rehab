@@ -22,7 +22,7 @@ const DEVICE = load(LS.device, null) || (() => { const d = 'D' + uid(); save(LS.
 function toast(msg) { const t = $('#toast'); t.textContent = msg; t.classList.add('show'); clearTimeout(toast._t); toast._t = setTimeout(() => t.classList.remove('show'), 2600); }
 const FACES = [['A', '第一面（A）'], ['B', '第二面（B）'], ['C', '第三面（C）'], ['D', '第四面（D）']];
 const GROUPS = ['1', '2', '3'];
-const normId = s => String(s || '').replace(/\s+/g, '').toUpperCase();
+const normId = s => String(s || '').normalize('NFKC').replace(/[\s\u200B-\u200D\uFEFF]+/g, '').toUpperCase();
 async function sha256hex(s) { const b = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(s)); return Array.from(new Uint8Array(b)).map(x => x.toString(16).padStart(2, '0')).join(''); }
 const idKey = id => sha256hex('rehab-id-v1:' + TEAM + ':' + normId(id));
 const devProof = pw => sha256hex('rehab-dev-v1:' + pw);
@@ -71,23 +71,15 @@ function fbInit() { if (fb) return true; if (!window.FB || !CFG.FIREBASE) return
 async function ensureAuth() { fbInit(); if (auth.currentUser) return auth.currentUser;
   await new Promise(ok => { const un = fb.onAuthStateChanged(auth, u => { un(); ok(u); }); });
   if (auth.currentUser) return auth.currentUser; return (await fb.signInAnonymously(auth)).user; }
-// 每次嘗試先在 guard 記一次（規則限制 5 次／15 分鐘）
-async function bumpGuard(k) {
-  const u = await ensureAuth(); const ref = tdoc(`guard/${u.uid}`); let g = null;
-  try { const s = await fb.getDoc(ref); g = s.exists() ? s.data() : null; } catch (e) {}
-  let n = 1; if (g) { const last = g.t && g.t.toMillis ? g.t.toMillis() : 0; if (g.n < 5) n = g.n + 1; else if (Date.now() > last + 15 * 60000 + 5000) n = 1; else { const m = Math.ceil((last + 15 * 60000 - Date.now()) / 60000); const err = new Error(`嘗試太多次，請 ${Math.max(1, m)} 分鐘後再試`); err.locked = true; throw err; } }
-  try { await fb.setDoc(ref, { n, t: fb.serverTimestamp(), k }); } catch (e) { const err = new Error('嘗試太多次，請 15 分鐘後再試'); err.locked = true; throw err; }
-  return u;
-}
 async function login(input) {
   const v = normId(input); if (!v) throw new Error('請輸入臂章號碼或義消證號');
-  const key = await idKey(v); const u = await bumpGuard(key);
+  const key = await idKey(v); const u = await ensureAuth();
   try { await fb.setDoc(tdoc(`members/${u.uid}`), { key, at: fb.serverTimestamp() }); }
   catch (e) { if (e.code === 'permission-denied') throw new Error('名冊查無此臂章號碼／義消證號'); throw e; }
   S.me = { key, id: v, title: '', name: '' }; save(LS.me, S.me); await startCloud(); resolveMe(); return true;
 }
 async function devLogin(pw) {
-  if (!pw) throw new Error('請輸入開發者密碼'); const proof = await devProof(pw); const u = await bumpGuard(proof);
+  if (!pw) throw new Error('請輸入開發者密碼'); const proof = await devProof(pw); const u = await ensureAuth();
   try { await fb.setDoc(tdoc(`devs/${u.uid}`), { proof, at: fb.serverTimestamp() }); }
   catch (e) { if (e.code === 'permission-denied') throw new Error('開發者密碼錯誤'); throw e; }
   S.dev = true; save(LS.dev, true); await startCloud(); return true;
@@ -289,7 +281,7 @@ function viewLogin() {
     <p class="muted">請輸入你的<b>臂章號碼</b>或<b>義消證號</b>（需在人員名冊內）才能使用。</p>
     <input id="loginId" placeholder="臂章號碼／義消證號" autocapitalize="characters" autocomplete="off">
     <button class="btn btn-red btn-block" id="loginBtn" style="font-size:18px">登入</button>
-    <p class="muted small">連續輸入錯誤 5 次會鎖定 15 分鐘。登入後這支手機會記住身分，離線也能用。</p>
+    <p class="muted small">登入後這支手機會記住身分，離線也能用。</p>
     <details style="margin-top:10px"><summary class="small">系統開發者登入</summary><input id="devPw" type="password" autocomplete="off" placeholder="開發者密碼"><button class="btn btn-block" id="devBtn">開發者登入</button></details></div>${DISC}`;
   const go = async () => { const b = $('#loginBtn'); b.disabled = true; b.textContent = '確認中…';
     try { await login($('#loginId').value); toast(`登入成功：${S.me.title || ''} ${S.me.name || S.me.id}`); const p = load(LS.pending, ''); localStorage.removeItem(LS.pending); location.replace(p || '#/'); route(true); }
