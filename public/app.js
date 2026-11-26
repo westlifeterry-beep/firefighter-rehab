@@ -151,7 +151,7 @@ function rowsToRoster(rows) {
   if (!rows.length) return []; const h = rows[0].map(x => x.trim()); const idx = n => h.findIndex(x => x.includes(n));
   let iId = idx('臂章'), iU = idx('分隊'), iT = idx('職稱'), iN = idx('姓名'), iV = idx('義消'), start = 1;
   if (iId < 0) { iId = 0; iU = 1; iT = 2; iN = 3; iV = 4; start = 0; }
-  return rows.slice(start).map(r => ({ id: (r[iId] || '').trim(), unit: (r[iU] || '').trim(), title: (r[iT] || '').trim(), name: (r[iN] || '').trim(), vid: iV >= 0 ? (r[iV] || '').trim() : '' })).filter(m => m.id);
+  return rows.slice(start).map(r => ({ id: (r[iId] || '').trim(), unit: (r[iU] || '').trim(), title: (r[iT] || '').trim(), name: (r[iN] || '').trim(), vid: iV >= 0 ? (r[iV] || '').trim() : '' })).map(m => Object.assign(m, { id: m.id || m.vid })).filter(m => m.id);
 }
 // 名冊寫入：roster 文件＋登入用雜湊鍵（臂章號碼、義消證號各一）
 async function rosterOps(batch, m, old) {

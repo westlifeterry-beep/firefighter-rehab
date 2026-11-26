@@ -76,8 +76,8 @@ function syncRoster_(t) {
   var iI = col('臂章'), iU = col('分隊'), iT = col('職稱'), iN = col('姓名'), iV = col('義消'); if (iI < 0) throw new Error('名冊第一列需要「臂章號碼」');
   var want = {}, keysWant = {}, writes = [], seen = {};
   for (var r = 1; r < v.length; r++) {
-    var id = String(v[r][iI]).trim(); if (!id) continue;
     var vid = iV >= 0 ? String(v[r][iV]).trim() : '';
+    var id = String(v[r][iI]).trim() || vid; if (!id) continue; // 義消沒有臂章號碼時，用義消證號當識別
     var docId = encodeURIComponent(normId_(id)); if (want[docId]) continue; want[docId] = 1;
     writes.push({ update: { name: docName_('roster/' + docId), fields: { id: { stringValue: id }, vid: { stringValue: vid }, unit: { stringValue: iU >= 0 ? String(v[r][iU]).trim() : '' }, title: { stringValue: iT >= 0 ? String(v[r][iT]).trim() : '' }, name: { stringValue: iN >= 0 ? String(v[r][iN]).trim() : '' }, src: { stringValue: 'sheet' }, at: { integerValue: String(Date.now()) } } } });
     [id].concat(vid ? [vid] : []).forEach(function (x) { var k = idKey_(x); if (seen[k]) return; seen[k] = 1; keysWant[k] = 1; writes.push({ update: { name: docName_('rosterKeys/' + k), fields: { r: { stringValue: docId }, src: { stringValue: 'sheet' } } } }); });
